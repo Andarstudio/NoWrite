@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="NoWrite.MainWindow" Title="NoWrite — Bootable USB Creator"
+        Width="560" Height="740" CanResize="False" Background="#14161A"
+        WindowStartupLocation="CenterScreen" FontSize="14">
+  <Window.Styles>
+    <Style Selector="TextBlock.h"><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#8A93A6"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0 0 0 8"/></Style>
+    <Style Selector="Border.card"><Setter Property="Background" Value="#1D2026"/><Setter Property="CornerRadius" Value="10"/><Setter Property="Padding" Value="16"/></Style>
+  </Window.Styles>
+  <StackPanel Margin="24" Spacing="14">
+    <TextBlock Text="Bootable USB Creator" FontSize="22" FontWeight="Bold" Foreground="White"/>
+
+    <Border Classes="card"><StackPanel>
+      <TextBlock Classes="h" Text="1 · SELECT ISO"/>
+      <DockPanel>
+        <Button x:Name="OpenIsoBtn" Content="Open ISO..." DockPanel.Dock="Right" Margin="12 0 0 0"/>
+        <StackPanel><TextBlock x:Name="IsoName" Text="No ISO selected" Foreground="White"/>
+          <TextBlock x:Name="IsoSize" Foreground="#8A93A6" FontSize="12"/></StackPanel>
+      </DockPanel>
+    </StackPanel></Border>
+
+    <Border Classes="card"><StackPanel>
+      <TextBlock Classes="h" Text="2 · SELECT USB"/>
+      <DockPanel>
+        <Button x:Name="RefreshBtn" Content="⟳ Refresh" DockPanel.Dock="Right" Margin="12 0 0 0"/>
+        <ComboBox x:Name="DriveBox" HorizontalAlignment="Stretch" PlaceholderText="No USB drive found"/>
+      </DockPanel>
+    </StackPanel></Border>
+
+    <Border Classes="card"><StackPanel>
+      <TextBlock Classes="h" Text="3 · BOOT MODE"/>
+      <StackPanel Orientation="Horizontal" Spacing="18">
+        <RadioButton x:Name="ModeUefi" GroupName="mode" Content="UEFI"/>
+        <RadioButton x:Name="ModeBios" GroupName="mode" Content="BIOS"/>
+        <RadioButton x:Name="ModeBoth" GroupName="mode" Content="UEFI + BIOS" IsChecked="True"/>
+      </StackPanel>
+      <TextBlock Text="Image-mode write: boot support comes from the ISO itself." Foreground="#8A93A6" FontSize="12" Margin="0 6 0 0"/>
+    </StackPanel></Border>
+
+    <Button x:Name="FlashBtn" Content="⚡ FLASH" IsEnabled="False" HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Center" Height="56" FontSize="20" FontWeight="Bold" Background="#2F6FED" Foreground="White"/>
+
+    <Border Classes="card"><StackPanel Spacing="8">
+      <TextBlock Classes="h" Text="PROGRESS"/>
+      <ProgressBar x:Name="Bar" Minimum="0" Maximum="100" Height="10"/>
+      <DockPanel><TextBlock x:Name="Pct" Text="0%" Foreground="White" DockPanel.Dock="Right"/>
+        <TextBlock x:Name="Op" Text="Idle" Foreground="#8A93A6"/></DockPanel>
+      <TextBlock x:Name="Speed" Text="" Foreground="#8A93A6" FontSize="12"/>
+    </StackPanel></Border>
+
+    <Border Classes="card"><StackPanel Spacing="4">
+      <TextBlock Classes="h" Text="STATUS"/>
+      <TextBlock x:Name="Status" Text="READY" FontSize="20" FontWeight="Bold" Foreground="#4CC38A"/>
+      <TextBlock x:Name="StatusMsg" TextWrapping="Wrap" Foreground="#8A93A6" FontSize="12"/>
+    </StackPanel></Border>
+  </StackPanel>
+</Window>
