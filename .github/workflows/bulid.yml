@@ -10,7 +10,7 @@ jobs:
   build-windows-x64:
     runs-on: windows-latest
     env:
-      PROJECT_FILE: codes/NoWrite.csproj   # change if your .csproj is elsewhere
+      PROJECT_FILE: codes/NoWrite.csproj
 
     steps:
       - uses: actions/checkout@v4
@@ -19,19 +19,32 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Publish
+      - name: Publish single exe
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
+          $OutputDir = Join-Path $env:GITHUB_WORKSPACE "publish\win-x64"
+
           dotnet publish "$env:PROJECT_FILE" `
             --configuration Release `
             --runtime win-x64 `
             --self-contained true `
             -p:PublishSingleFile=true `
-            --output publish/win-x64
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
+            --output "$OutputDir"
+
           if ($LASTEXITCODE -ne 0) { throw "NoWrite publish failed." }
-          if (!(Get-ChildItem publish/win-x64 -Filter *.exe)) { throw "No executable was produced." }
+
+          $exe = Get-ChildItem -Path $OutputDir -Filter "NoWrite.exe"
+          if (!$exe) { throw "NoWrite.exe was not produced." }
+
+          $final = Join-Path $env:GITHUB_WORKSPACE "release"
+          New-Item -ItemType Directory -Path $final -Force | Out-Null
+          Copy-Item $exe.FullName $final
 
       - uses: actions/upload-artifact@v4
         with:
           name: NoWrite-win-x64
-          path: publish/win-x64
+          path: release/NoWrite.exe
