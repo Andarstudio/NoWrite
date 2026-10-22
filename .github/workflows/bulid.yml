@@ -1,0 +1,99 @@
+name: Build NoWrite for Windows
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract NoWrite source ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $ZipFile = "NoWrite.zip"
+
+          if (!(Test-Path $ZipFile)) {
+            Write-Error "Could not find $ZipFile in the repository root. Upload your source ZIP with this exact filename."
+          }
+
+          $ExtractDir = Join-Path $env:GITHUB_WORKSPACE "extracted"
+          New-Item -ItemType Directory -Path $ExtractDir -Force | Out-Null
+
+          Expand-Archive -Path $ZipFile -DestinationPath $ExtractDir -Force
+
+          $Project = Get-ChildItem -Path $ExtractDir -Filter "*.csproj" -Recurse |
+            Select-Object -First 1
+
+          if (!$Project) {
+            Write-Error "No .csproj file was found inside the source ZIP."
+          }
+
+          "PROJECT_FILE=$($Project.FullName)" |
+            Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          Write-Host "Found project: $($Project.FullName)"
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore "$env:PROJECT_FILE" -r win-x64
+
+      - name: Publish NoWrite for Windows x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $OutputDir = Join-Path $env:GITHUB_WORKSPACE "publish\win-x64"
+
+          dotnet publish "$env:PROJECT_FILE" `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --output "$OutputDir"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "NoWrite publish failed."
+          }
+
+          if (!(Get-ChildItem -Path $OutputDir -Filter "*.exe")) {
+            Write-Error "No executable was produced."
+          }
+
+      - name: Package Windows build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          Compress-Archive `
+            -Path "$env:GITHUB_WORKSPACE\publish\win-x64\*" `
+            -DestinationPath "$env:GITHUB_WORKSPACE\NoWrite-win-x64.zip" `
+            -CompressionLevel Optimal
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NoWrite-win-x64
+          path: NoWrite-win-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach build to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: NoWrite-win-x64.zip
